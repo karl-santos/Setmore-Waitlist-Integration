@@ -1,5 +1,7 @@
 class Subscriber < ApplicationRecord
-  validates :phone_number, presence: true, uniqueness: true
+  validates :phone_number, presence: true, uniqueness: {
+    conditions: -> { active }
+  }
 
   # this lets you do Subscriber.active to get all active subscribers
   # active means they have not opted out and their subscription has not expired
