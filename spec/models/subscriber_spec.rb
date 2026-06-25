@@ -33,4 +33,17 @@ RSpec.describe Subscriber, type: :model do
     create(:subscriber, phone_number: "+14169999999", opted_out: true)
     expect(Subscriber.active).to eq([ active ])
   end
+
+
+  # Test that invalid phone number format is rejected
+  it "is invalid with a badly formatted phone number" do
+    subscriber = build(:subscriber, phone_number: "1234567890")
+    expect(subscriber).to_not be_valid
+  end
+
+  # Test that a valid E.164 format is accepted
+  it "is valid with a proper E.164 phone number" do
+    subscriber = build(:subscriber, phone_number: "+14161234567")
+    expect(subscriber).to be_valid
+  end
 end
