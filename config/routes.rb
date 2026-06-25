@@ -5,6 +5,9 @@ Rails.application.routes.draw do
   # Root route - when someone visits your site, show the subscribe form
   root "subscribers#new"
 
+
+  post "/twilio/inbound", to: "twilio#inbound"
+
   # Subscribers routes
   # GET  /subscribers/new - show the subscribe form
   # POST /subscribers     - handle form submission and save to database
