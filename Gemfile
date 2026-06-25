@@ -71,3 +71,5 @@ gem "sidekiq"
 gem "httparty"
 gem "dotenv-rails"
 gem "fiddle"
+
+gem "twilio-ruby"
