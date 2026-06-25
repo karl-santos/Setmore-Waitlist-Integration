@@ -1,0 +1,32 @@
+<div class="container">
+  <h1>Get Notified When Slots Open Up</h1>
+  <p>Enter your phone number and we'll text you when new appointment slots become available. Subscription lasts 7 days.</p>
+
+  <%# Show any error messages if the form submission failed %>
+  <% if @subscriber.errors.any? %>
+    <div class="errors">
+      <% @subscriber.errors.full_messages.each do |message| %>
+        <p><%= message %></p>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# Show success/failure flash messages %>
+  <% if notice %>
+    <div class="notice"><%= notice %></div>
+  <% end %>
+
+  <%# The subscribe form %>
+  <%= form_with model: @subscriber do |form| %>
+    <div class="field">
+      <%= form.label :phone_number, "Phone Number" %>
+      <%= form.telephone_field :phone_number, placeholder: "+1 416 123 4567" %>
+    </div>
+
+    <div class="actions">
+      <%= form.submit "Subscribe" %>
+    </div>
+  <% end %>
+
+  <p class="fine-print">Reply STOP at any time to unsubscribe.</p>
+</div>
