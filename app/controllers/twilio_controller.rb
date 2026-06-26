@@ -1,35 +1,64 @@
 class TwilioController < ApplicationController
-  # Skip CSRF protection for this endpoint
-  # Twilio sends POST requests from their servers, not from a browser form
-  # so Rails' CSRF protection would reject them
   skip_before_action :verify_authenticity_token, only: [ :inbound ]
 
+  ADMIN_PHONE = ENV["ADMIN_PHONE"]
+
   def inbound
-    # Twilio sends the sender's phone number as "From"
-    # and the message content as "Body"
     from = params["From"]
     body = params["Body"].to_s.strip.downcase
 
-    # Find the subscriber by their phone number
+    if from == ADMIN_PHONE
+      handle_admin_command(body)
+    else
+      handle_subscriber_command(from, body)
+    end
+
+    render xml: "<Response></Response>"
+  end
+
+  private
+
+  def handle_admin_command(body)
+    case body
+    when "poll"
+      PollSlotsJob.perform_later
+      send_sms(ADMIN_PHONE, "Poll job queued. Check logs.")
+    when "status"
+      count = Subscriber.active.count
+      send_sms(ADMIN_PHONE, "Active subscribers: #{count}")
+    when "slots"
+      slots = AvailableSlot.order(:slot_datetime).pluck(:slot_datetime)
+      if slots.empty?
+        send_sms(ADMIN_PHONE, "No slots in database.")
+      else
+        message = slots.map { |s| s.strftime("%a %b %-d %-I:%M %p") }.join("\n")
+        send_sms(ADMIN_PHONE, message)
+      end
+    else
+      send_sms(ADMIN_PHONE, "Commands: poll, status, slots")
+    end
+  end
+
+  def handle_subscriber_command(from, body)
     subscriber = Subscriber.find_by(phone_number: from)
 
     if body == "stop"
-      # Opt them out if they exist in the database
       if subscriber
         subscriber.update(opted_out: true)
         Rails.logger.info "Subscriber #{from} opted out via STOP"
       end
-
-    elsif body == "start"
-      # Reactivate their subscription if they exist
-      if subscriber
-        subscriber.update(opted_out: false, expires_at: Time.now + 7.days)
-        Rails.logger.info "Subscriber #{from} resubscribed via START"
-      end
     end
+  end
 
-    # Twilio expects a TwiML XML response
-    # An empty Response means no reply text is sent back
-    render xml: "<Response></Response>"
+  def send_sms(to, message)
+    client = Twilio::REST::Client.new(
+      ENV["TWILIO_ACCOUNT_SID"],
+      ENV["TWILIO_AUTH_TOKEN"]
+    )
+    client.messages.create(
+      from: ENV["TWILIO_PHONE_NUMBER"],
+      to: to,
+      body: message
+    )
   end
 end

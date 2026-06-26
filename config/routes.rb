@@ -4,7 +4,7 @@ Rails.application.routes.draw do
 
   # Root route - when someone visits your site, show the subscribe form
   root "subscribers#new"
-
+  get "/admin/trigger-poll", to: "admin#trigger_poll"
 
   post "/twilio/inbound", to: "twilio#inbound"
 
